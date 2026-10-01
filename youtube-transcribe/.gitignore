@@ -1,0 +1,12 @@
+.venv/
+*.local.sh
+__pycache__/
+*.pyc
+# scratch / downloaded media never belongs in the repo
+out/
+*.mp3
+*.mp4
+*.m4a
+*.webm
+*.jpg
+metadata.json
