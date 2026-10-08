@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 # Download + transcribe many videos. One folder per video id, plus a manifest.
-# Usage: batch.sh <outdir> <urls-file>     (urls-file: one URL or video id per line; blank lines / # comments ignored)
-#        ... or pipe URLs on stdin:  search.sh "q" 20 --urls | batch.sh <outdir> -
+# Usage: batch.sh <outdir> <urls-file> [transcribe flags]
+#          urls-file: one URL or video id per line; blank lines / # comments ignored
+#          transcribe flags go to every transcription: --lang spa, --keyterms "a,b,c", --no-diarize
+#        ... or pipe URLs on stdin:  search.sh "q" 20 --urls | batch.sh <outdir> - --lang spa
 set -euo pipefail
-OUT="${1:?usage: batch.sh <outdir> <urls-file|->}"
+OUT="${1:?usage: batch.sh <outdir> <urls-file|-> [--lang xxx] [--keyterms a,b,c] [--no-diarize]}"
 SRC="${2:?urls file (or - for stdin)}"
+shift 2
+TFLAGS=("$@")
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 mkdir -p "$OUT"
 MANIFEST="$OUT/manifest.tsv"
@@ -24,7 +28,7 @@ while IFS= read -r url; do
     echo "  already transcribed, skipping"
   else
     bash "$DIR/download.sh" "$url" "$vdir" audio >/dev/null 2>&1 || { echo "  download failed"; echo -e "$id\tDOWNLOAD_FAILED\t$url" >> "$MANIFEST"; continue; }
-    bash "$DIR/transcribe.sh" "$vdir/audio.mp3" "$vdir" >/dev/null 2>&1 || { echo "  transcribe failed"; echo -e "$id\tTRANSCRIBE_FAILED\t$url" >> "$MANIFEST"; continue; }
+    bash "$DIR/transcribe.sh" "$vdir/audio.mp3" "$vdir" ${TFLAGS[@]+"${TFLAGS[@]}"} >/dev/null 2>&1 || { echo "  transcribe failed"; echo -e "$id\tTRANSCRIBE_FAILED\t$url" >> "$MANIFEST"; continue; }
     # audio can be large; drop it once transcribed
     rm -f "$vdir/audio.mp3"
   fi

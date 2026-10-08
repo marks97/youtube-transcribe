@@ -5,7 +5,7 @@ Usage: transcribe.py <audio_file> <outdir> [--no-diarize] [--lang xxx] [--keyter
 
 Writes into <outdir>:
   transcript.txt           full plain text
-  transcript.diarized.txt  speaker-grouped, timestamped (read this to absorb the talk)
+  transcript.diarized.txt  speaker-grouped, timestamped lines of ~30-60 s (read this to absorb the talk)
   transcript.json          raw ElevenLabs response (words + timings + speakers)
 """
 import os
@@ -17,6 +17,14 @@ from elevenlabs import ElevenLabs
 
 def _get(w, k, default=None):
     return w.get(k, default) if isinstance(w, dict) else getattr(w, k, default)
+
+
+# A single-speaker talk would otherwise be one huge line with one timestamp, which makes
+# "what was said at 12:40" impossible to find. Start a new line at the first sentence end
+# after SOFT_BREAK seconds, and unconditionally after HARD_BREAK seconds.
+SOFT_BREAK = 30
+HARD_BREAK = 60
+SENTENCE_END = (".", "?", "!", "…")
 
 
 def main():
@@ -69,6 +77,10 @@ def main():
         if seg_start is None and st is not None:
             seg_start = st
         buf.append(txt)
+        elapsed = (st - seg_start) if (st is not None and seg_start is not None) else 0
+        if elapsed >= HARD_BREAK or (elapsed >= SOFT_BREAK and txt.rstrip().endswith(SENTENCE_END)):
+            flush()
+            buf, seg_start = [], None
     flush()
 
     with open(os.path.join(a.outdir, "transcript.diarized.txt"), "w") as f:

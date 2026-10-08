@@ -33,7 +33,7 @@ bash "$S/download.sh"   "<url>" "$OUT" audio          # audio.mp3 + metadata.jso
 bash "$S/transcribe.sh" "$OUT/audio.mp3" "$OUT"        # transcript.txt + .diarized.txt + .json
 ```
 
-Then **read `transcript.diarized.txt`** (timestamped, speaker-grouped) and write up what matters: the thesis, the steps/method, the concrete claims, the numbers, anything actionable. Skip the filler. If it is a tutorial, capture the actual how; if it is a talk, capture the argument and evidence.
+Then **read `transcript.diarized.txt`** (speaker-grouped, one timestamped line every ~30-60 s, so even a single-speaker talk can be cited by minute) and write up what matters: the thesis, the steps/method, the concrete claims, the numbers, anything actionable. Skip the filler. If it is a tutorial, capture the actual how; if it is a talk, capture the argument and evidence.
 
 `transcribe.sh` flags: `--no-diarize` (single speaker), `--lang spa` (hint; omit to auto-detect), `--keyterms "Kubernetes,PyTorch,yt-dlp"` (spell names/jargon right — Scribe will otherwise mangle them, which poisons the summary).
 
@@ -51,7 +51,7 @@ bash "$S/search.sh" "quantitative trading with LLMs" 20 --date     # sort by new
 # 2. Transcribe the chosen ones in one go (each lands in <OUT>/<video-id>/).
 bash "$S/search.sh" "quantitative trading with LLMs" 20 --urls > /tmp/urls.txt
 #   ...edit /tmp/urls.txt down to the 10-15 worth watching, then:
-bash "$S/batch.sh" /tmp/claude/youtube-transcribe/topic /tmp/urls.txt
+bash "$S/batch.sh" /tmp/claude/youtube-transcribe/topic /tmp/urls.txt --lang spa --keyterms "IRPF,Hacienda"   # flags after the urls file go to every transcription
 ```
 
 Be selective, not exhaustive: a 3-hour stream and a 40-second Short are rarely both worth it. Prefer substance (duration, channel authority, title specificity) over raw view count. Then read every transcript and produce **one synthesis** across all of them — the consensus, the disagreements, the best single source, and what is still unanswered — not N separate summaries.
@@ -97,7 +97,7 @@ Keep the raw `transcript.txt` on disk and point to it; paste quotes, not the who
 | `scripts/search.sh "<q>" [n] [--date] [--urls]` | Find videos for a topic — free, no API key |
 | `scripts/download.sh <url> <out> [audio\|video\|both]` | yt-dlp audio (mp3) and/or video (≤720p) + metadata.json |
 | `scripts/transcribe.sh <audio> <out> [--no-diarize] [--lang] [--keyterms]` | ElevenLabs Scribe v2 → text + diarized + raw json |
-| `scripts/batch.sh <outdir> <urls-file>` | Download+transcribe many; one folder per video + manifest |
+| `scripts/batch.sh <outdir> <urls-file> [--lang] [--keyterms] [--no-diarize]` | Download+transcribe many; one folder per video + manifest; flags are passed to every transcription |
 | `scripts/frames.sh <video> <out> every <sec> \| at <ts,ts>` | Extract stills to Read |
 | `scripts/ask-gemini.sh <url\|file> "<question>"` | Gemini visual understanding (fallback) |
 

@@ -11,10 +11,10 @@ Q="${1:?usage: search.sh \"<query>\" [count] [--date] [--urls]}"
 shift || true
 N=15
 URLS=0
-KIND="ytsearch"
+DATE=0
 for a in "$@"; do
   case "$a" in
-    --date) KIND="ytsearchdate" ;;
+    --date) DATE=1 ;;
     --urls) URLS=1 ;;
     ''|*[!0-9]*) : ;;   # ignore non-numeric
     *) N="$a" ;;
@@ -24,9 +24,19 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck disable=SC1091
 . "$ROOT/.venv/bin/activate"
 
-if [ "$URLS" -eq 1 ]; then
-  yt-dlp "${KIND}${N}:${Q}" --flat-playlist --no-warnings --print "https://www.youtube.com/watch?v=%(id)s"
+if [ "$DATE" -eq 1 ]; then
+  # yt-dlp dropped the "ytsearchdate" scheme; the results page sorted by upload date
+  # (sp=CAISAhAB: sort=upload date, type=video) gives the same list.
+  ENC="$(python -c 'import sys, urllib.parse; print(urllib.parse.quote_plus(sys.argv[1]))' "$Q")"
+  SRC=("https://www.youtube.com/results?search_query=${ENC}&sp=CAISAhAB" --playlist-end "$N")
 else
-  yt-dlp "${KIND}${N}:${Q}" --flat-playlist --no-warnings \
-    --print "%(id)s\t%(duration>%H:%M:%S)s\t%(channel)s\t%(title)s"
+  SRC=("ytsearch${N}:${Q}")
+fi
+
+if [ "$URLS" -eq 1 ]; then
+  yt-dlp "${SRC[@]}" --flat-playlist --no-warnings --print "https://www.youtube.com/watch?v=%(id)s"
+else
+  TAB=$'\t'
+  yt-dlp "${SRC[@]}" --flat-playlist --no-warnings \
+    --print "%(id)s${TAB}%(duration>%H:%M:%S)s${TAB}%(channel)s${TAB}%(title)s"
 fi

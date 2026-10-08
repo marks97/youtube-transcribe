@@ -1,6 +1,6 @@
 {
   "name": "youtube-transcribe",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Absorb the knowledge in YouTube videos \u2014 find them, transcribe them with ElevenLabs Scribe v2, inspect their visuals, and digest what they actually teach.",
   "author": {
     "name": "Marc Amoros",
